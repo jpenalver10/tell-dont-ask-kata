@@ -10,6 +10,7 @@ import static it.gabrieletondi.telldontaskkata.domain.OrderStatus.REJECTED;
 import static it.gabrieletondi.telldontaskkata.domain.OrderStatus.SHIPPED;
 
 public class OrderShipmentUseCase {
+
     private final OrderRepository orderRepository;
     private final ShipmentService shipmentService;
 
@@ -19,19 +20,20 @@ public class OrderShipmentUseCase {
     }
 
     public void run(OrderShipmentRequest request) {
+
         final Order order = orderRepository.getById(request.getOrderId());
 
-        if (order.getStatus().equals(CREATED) || order.getStatus().equals(REJECTED)) {
+        if (order.isCreated() || order.isRejected()) {
             throw new OrderCannotBeShippedException();
         }
 
-        if (order.getStatus().equals(SHIPPED)) {
+        if (order.isShipped()) {
             throw new OrderCannotBeShippedTwiceException();
         }
 
         shipmentService.ship(order);
 
-        order.setStatus(OrderStatus.SHIPPED);
+        order.setShippedStatus();
         orderRepository.save(order);
     }
 }

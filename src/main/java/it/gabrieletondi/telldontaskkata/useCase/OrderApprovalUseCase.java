@@ -5,6 +5,7 @@ import it.gabrieletondi.telldontaskkata.domain.OrderStatus;
 import it.gabrieletondi.telldontaskkata.repository.OrderRepository;
 
 public class OrderApprovalUseCase {
+
     private final OrderRepository orderRepository;
 
     public OrderApprovalUseCase(OrderRepository orderRepository) {
@@ -12,21 +13,23 @@ public class OrderApprovalUseCase {
     }
 
     public void run(OrderApprovalRequest request) {
-        final Order order = orderRepository.getById(request.getOrderId());
 
-        if (order.getStatus().equals(OrderStatus.SHIPPED)) {
+        final Order order = orderRepository.getById(request.getOrderId());
+        boolean isToApproveRequest = request.isApproved();
+
+        if (order.isShipped()) {
             throw new ShippedOrdersCannotBeChangedException();
         }
 
-        if (request.isApproved() && order.getStatus().equals(OrderStatus.REJECTED)) {
+        if (isToApproveRequest && order.isRejected()) {
             throw new RejectedOrderCannotBeApprovedException();
         }
 
-        if (!request.isApproved() && order.getStatus().equals(OrderStatus.APPROVED)) {
+        if (!isToApproveRequest && order.isApproved()) {
             throw new ApprovedOrderCannotBeRejectedException();
         }
 
-        order.setStatus(request.isApproved() ? OrderStatus.APPROVED : OrderStatus.REJECTED);
+        order.moveStatus(request.isApproved());
         orderRepository.save(order);
     }
 }
